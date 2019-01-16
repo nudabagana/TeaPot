@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ChessBall</title>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/90/three.js"></script> -->
+    <script src="./three.js"></script>
+    <script src="./dat.gui.min.js"></script>
+    <script src="./OrbitControls.js"></script>
+    <script src="./ParametricGeometries.js"></script>
+    <script src="./geometry.js"></script>
+    <script src="./SceneUtils.js"></script>
+    <script src="./QuickHull.js"></script>
+    <script src="./ConvexGeometry.js"></script>
+    <script src="./TeapotBufferGeometry.js"></script>
+    <script src="./TeapotGeometry.js"></script>
+    <script type="x-shader/x-vertex" id="vertexShader">
+
+        precision mediump float;
+    
+        varying vec3 vPosition; 
+        varying vec3 vPosInCamera;
+        varying vec3 vNormal; 
+        varying vec2 vUv;
+        uniform float uDirX, uDirY, uShininess;
+        
+        void main(void) {
+            vUv = uv;
+            vNormal = normalMatrix * normal;
+            vPosition = position;
+            vPosInCamera = (viewMatrix * modelMatrix * vec4(position, 1.0 )).xyz; 
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1.0 );
+        }
+    </script>
+    <script type="x-shader/x-vertex" id="vertexShaderCone">
+
+        precision mediump float;
+    
+        varying vec3 vPosition; 
+        varying vec3 vPosInCamera;
+        varying vec3 vNormal; 
+        varying vec2 vUv;
+        uniform float uDirX, uDirY, uShininess, uConeHeight;
+        
+        void main(void) {
+            vUv = uv;
+            vNormal = normalMatrix * normal;
+            vPosition = position;
+            if (vPosition.y > 0.0 - (vPosition.x * 0.7))
+            {
+               vPosition.y =  0.0 - (vPosition.x * 0.7);
+               if (vPosition.y < uConeHeight / (-2.0))
+               {
+                    vPosition.y = uConeHeight / (-2.0);
+                    vPosition.x = 0.0;
+               }
+            } 
+            vPosInCamera = (viewMatrix * modelMatrix * vec4(vPosition, 1.0 )).xyz;
+   
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1.0 );
+        }
+    </script>
+    <script type="x-shader/x-vertex" id="fragmentShader">
+        precision mediump float;	
+    
+        varying vec3 vPosition; 
+        varying vec3 vPosInCamera;	
+        varying vec3 vNormal; 
+        varying vec2 vUv;
+        uniform float uDirX, uDirY, uShininess, texHeight;
+        uniform sampler2D texture1;
+        
+        void main() {
+            if (vPosition.y> -1.9 && vPosition.y < 2.9 
+            && vPosition.x > -20.0 && vPosition.x < 18.2)
+            {
+                gl_FragColor = texture2D(texture1, vUv); // Displays Nothing
+            }
+            else
+            {
+                vec3 nNormal = normalize(vNormal);        
+
+                vec3 ambColor = vec3(0.1,0.1,0.1);
+                vec3 diffColor = vec3(0.6,0.6,0.6);
+                vec3 specColor = vec3(0.4,0.4,0.3);
+
+                vec3 lightDir = normalize(vec3(uDirX,uDirY,1.0));    
+                float diffLightWeight = max(dot(nNormal,lightDir),0.0);		
+                vec3 eyeDir = normalize(-vPosInCamera);
+                vec3 reflDir = -reflect(lightDir, nNormal);
+                float specLightWeight = pow(max(dot(reflDir, eyeDir), 0.0), uShininess);
+                vec3 lightWeight = ambColor + diffColor * diffLightWeight 
+                    + specColor * specLightWeight;                
+                vec3 color = lightWeight;  
+                gl_FragColor = vec4(color,1.0);  
+            }
+        }
+    </script>
+    <script type="x-shader/x-vertex" id="fragmentShaderCone">
+        precision mediump float;	
+    
+        varying vec3 vPosition; 
+        varying vec3 vPosInCamera;	
+        varying vec3 vNormal; 
+        varying vec2 vUv;
+        uniform float uDirX, uDirY, uShininess, texHeight;
+        uniform sampler2D texture1;
+        
+        void main() {
+            vec3 nNormal = normalize(vNormal);        
+
+            vec3 ambColor = vec3(0.1,0.1,0.1);
+            vec3 diffColor = vec3(0.6,0.6,0.6);
+            vec3 specColor = vec3(0.4,0.4,0.3);
+
+            vec3 lightDir = normalize(vec3(uDirX,uDirY,1.0));    
+            float diffLightWeight = max(dot(nNormal,lightDir),0.0);		
+            vec3 eyeDir = normalize(-vPosInCamera);
+            vec3 reflDir = -reflect(lightDir, nNormal);
+            float specLightWeight = pow(max(dot(reflDir, eyeDir), 0.0), uShininess);
+            vec3 lightWeight = ambColor + diffColor * diffLightWeight 
+                + specColor * specLightWeight;                
+            vec3 color = lightWeight;  
+            gl_FragColor = vec4(color,1.0);  
+        }
+    </script>
+    <script src="./myScript2.js"></script>
+</head>
+<body>
+    <div id="container"></div>
+    
+</body>
+</html>
